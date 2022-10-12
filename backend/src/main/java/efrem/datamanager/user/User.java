@@ -1,6 +1,9 @@
 package efrem.datamanager.user;
 
 import com.nimbusds.jose.util.Pair;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import javax.annotation.processing.Generated;
 import javax.persistence.*;
@@ -8,7 +11,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "account")
-public class User {
+public class User implements UserDetails {
     @Id
     @SequenceGenerator( name = "user_sequence",
     sequenceName = "user_sequence",
@@ -17,6 +20,11 @@ public class User {
     generator = "user_sequence")
     private Long id;
     private String email;
+    private String password;
+    @Enumerated(EnumType.STRING)
+    private UserRole userRole;
+    private Boolean locked;
+    private Boolean enabled;
     @ElementCollection
     @CollectionTable(name = "services_used",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
@@ -27,14 +35,22 @@ public class User {
     public User() {
     }
 
-    public User(Long id, String email, Map<String, Boolean> interactions) {
+    public User(Long id, String email, String password, UserRole userRole, Boolean locked, Boolean enabled, Map<String, Boolean> interactions) {
         this.id = id;
         this.email = email;
+        this.password = password;
+        this.userRole = userRole;
+        this.locked = locked;
+        this.enabled = enabled;
         this.interactions = interactions;
     }
 
-    public User(String email, Map<String, Boolean> interactions) {
+    public User(String email, String password, UserRole userRole, Boolean locked, Boolean enabled, Map<String, Boolean> interactions) {
         this.email = email;
+        this.password = password;
+        this.userRole = userRole;
+        this.locked = locked;
+        this.enabled = enabled;
         this.interactions = interactions;
     }
 
@@ -62,6 +78,34 @@ public class User {
         this.interactions = interactions;
     }
 
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public UserRole getUserRole() {
+        return userRole;
+    }
+
+    public void setUserRole(UserRole userRole) {
+        this.userRole = userRole;
+    }
+
+    public Boolean getLocked() {
+        return locked;
+    }
+
+    public void setLocked(Boolean locked) {
+        this.locked = locked;
+    }
+
+    public Boolean getEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(Boolean enabled) {
+        this.enabled = enabled;
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -69,5 +113,41 @@ public class User {
                 ", email='" + email + '\'' +
                 ", interactions=" + interactions +
                 '}';
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        SimpleGrantedAuthority authorithy = new SimpleGrantedAuthority(userRole.name());
+        return Collections.singletonList(authorithy);
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return !locked;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 }
