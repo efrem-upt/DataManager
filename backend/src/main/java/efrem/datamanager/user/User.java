@@ -13,11 +13,11 @@ import java.util.*;
 @Table(name = "account")
 public class User implements UserDetails {
     @Id
-    @SequenceGenerator( name = "confirmation_token_sequence",
-    sequenceName = "confirmation_token_sequence",
+    @SequenceGenerator( name = "user_sequence",
+    sequenceName = "user_sequence",
     allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE,
-    generator = "confirmation_token_sequence")
+    generator = "user_sequence")
     private Long id;
     private String email;
     private String password;

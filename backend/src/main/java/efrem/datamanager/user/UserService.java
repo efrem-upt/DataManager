@@ -36,20 +36,32 @@ public class UserService implements UserDetailsService {
     public String addUser(User user) {
         Optional<User> userOptional = userRepository.findUserByEmail(user.getEmail());
         if (userOptional.isPresent()) {
-            throw new IllegalStateException("E-mail address is taken");
+            Optional<ConfirmationToken> optionalConfirmationToken = confirmationTokenService.getTokenByUserEmail(user.getEmail());
+            ConfirmationToken existentToken = optionalConfirmationToken.get();
+            if (optionalConfirmationToken.isPresent() && existentToken.getConfirmedAt() == null) {
+                if (existentToken.isExpired()) {
+                    existentToken.setExpiresAt(LocalDateTime.now().plusMinutes(15));
+                    existentToken.setToken(UUID.randomUUID().toString());
+                    confirmationTokenService.updateToken(existentToken);
+                    return existentToken.getToken();
+                } else
+                    throw new IllegalStateException("You must wait 15 minutes before requesting a new confirmation e-mail");
+            }
+            else
+                throw new IllegalStateException("E-mail address is taken");
+        } else {
+            String encodedPassword = bCryptPasswordEncoder.encode(user.getPassword());
+            user.setPassword(encodedPassword);
+            userRepository.save(user);
+
+            String token = UUID.randomUUID().toString();
+            ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), user);
+            confirmationTokenService.saveConfirmationToken(confirmationToken);
+
+            return token;
         }
-        String encodedPassword = bCryptPasswordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
-        userRepository.save(user);
-
-        String token = UUID.randomUUID().toString();
-        ConfirmationToken confirmationToken = new ConfirmationToken(token, LocalDateTime.now(), LocalDateTime.now().plusMinutes(15), user);
-        confirmationTokenService.saveConfirmationToken(confirmationToken);
 
 
-        // TODO: Send email
-
-        return token;
     }
 
     @Override
