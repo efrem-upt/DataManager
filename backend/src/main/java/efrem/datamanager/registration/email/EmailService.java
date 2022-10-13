@@ -16,6 +16,11 @@ import javax.mail.internet.MimeMessage;
 public class EmailService implements EmailSender {
     private final static Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
     private final JavaMailSender mailSender;
+    private String subject;
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
 
     public EmailService(JavaMailSender mailSender) {
         this.mailSender = mailSender;
@@ -28,7 +33,7 @@ public class EmailService implements EmailSender {
             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, "utf-8");
             helper.setText(email, true);
             helper.setTo(to);
-            helper.setSubject("Confirm your account to start your data erasure");
+            helper.setSubject(subject);
             helper.setFrom("hello@datamanager.efrem.ro");
             mailSender.send(mimeMessage);
 

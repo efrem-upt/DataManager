@@ -1,12 +1,13 @@
 package efrem.datamanager.user;
 
+import efrem.datamanager.user.token.ResetPasswordToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping(path = "api/v1/user")
+@RequestMapping(path = "user")
 public class UserController {
 
     private final UserService userService;
@@ -16,13 +17,13 @@ public class UserController {
         this.userService = userService;
     }
 
-    @GetMapping
-    public List<User> getUsers() {
-        return userService.getUsers();
+    @GetMapping(path = "request-reset-password")
+    public void requestReset(@RequestParam("email") String email) {
+        userService.request(email);
     }
 
-    @PostMapping
-    public void addUser(@RequestBody User user) {
-        userService.addUser(user);
+    @PostMapping(path = "reset-password")
+    public void resetPassword(@RequestParam("token") String token, @RequestBody ResetPasswordRequest resetPasswordRequest) {
+        userService.resetPassword(token, resetPasswordRequest);
     }
 }

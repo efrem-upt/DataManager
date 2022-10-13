@@ -35,7 +35,8 @@ public class RegistrationService {
             throw new IllegalStateException("The entered e-mail address is not valid");
         }
         String token = userService.addUser(new User(request.getEmail(), request.getPassword(), UserRole.USER, new HashMap<String, Boolean>()));
-        String link = "http://localhost:8080/api/v1/registration/confirm?token=" + token;
+        String link = "http://localhost:8080/registration/confirm?token=" + token;
+        emailSender.setSubject("Confirm the account to start erasing your data");
         emailSender.send(request.getEmail(), buildEmail(request.getEmail(), link));
         return token;
     }
