@@ -23,8 +23,8 @@ public class User implements UserDetails {
     private String password;
     @Enumerated(EnumType.STRING)
     private UserRole userRole;
-    private Boolean locked;
-    private Boolean enabled;
+    private Boolean locked = false;
+    private Boolean enabled = false;
     @ElementCollection
     @CollectionTable(name = "services_used",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
@@ -35,17 +35,15 @@ public class User implements UserDetails {
     public User() {
     }
 
-    public User(Long id, String email, String password, UserRole userRole, Boolean locked, Boolean enabled, Map<String, Boolean> interactions) {
+    public User(Long id, String email, String password, UserRole userRole, Map<String, Boolean> interactions) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.userRole = userRole;
-        this.locked = locked;
-        this.enabled = enabled;
         this.interactions = interactions;
     }
 
-    public User(String email, String password, UserRole userRole, Boolean locked, Boolean enabled, Map<String, Boolean> interactions) {
+    public User(String email, String password, UserRole userRole, Map<String, Boolean> interactions) {
         this.email = email;
         this.password = password;
         this.userRole = userRole;

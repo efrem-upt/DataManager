@@ -19,8 +19,8 @@ public class UserConfig {
             HashMap<String, Boolean> map2 = new HashMap<>();
             map2.put("amazon.com",false);
             map2.put("facebook.com",false);
-            User user = new User("dragosefrem@gmail.com", "test", userRole1, false, true, map);
-            User user2 = new User("efremdragos@yahoo.com", "test2", userRole1, false, true, map2);
+            User user = new User("dragosefrem@gmail.com", "test", userRole1, map);
+            User user2 = new User("efremdragos@yahoo.com", "test2", userRole1, map2);
             repository.saveAll(List.of(user, user2));
         };
     }
