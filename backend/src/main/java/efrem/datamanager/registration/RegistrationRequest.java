@@ -1,17 +1,17 @@
 package efrem.datamanager.registration;
 
-import efrem.datamanager.user.UserRole;
-
 import java.util.Objects;
 
 public class RegistrationRequest {
     private final String email;
     private final String password;
+    private final String confirmPassword;
 
 
-    public RegistrationRequest(String email, String password) {
+    public RegistrationRequest(String email, String password, String confirmPassword) {
         this.email = email;
         this.password = password;
+        this.confirmPassword = confirmPassword;
     }
 
     public String getEmail() {
@@ -20,6 +20,10 @@ public class RegistrationRequest {
 
     public String getPassword() {
         return password;
+    }
+
+    public String getConfirmPassword() {
+        return confirmPassword;
     }
 
     @Override

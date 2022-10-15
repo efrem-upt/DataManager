@@ -6,13 +6,13 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-public class ResetPasswordToken {
+public class DeleteAccountToken {
     @Id
-    @SequenceGenerator( name = "reset_password_token_sequence",
-            sequenceName = "reset_password_token_sequence",
+    @SequenceGenerator( name = "delete_account_token_sequence",
+            sequenceName = "delete_account_token_sequence",
             allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE,
-            generator = "reset_password_token_sequence")
+            generator = "delete_account_token_sequence")
     private Long id;
 
     @Column(nullable = false)
@@ -28,10 +28,10 @@ public class ResetPasswordToken {
     )
     private User user;
 
-    public ResetPasswordToken() {
+    public DeleteAccountToken() {
     }
 
-    public ResetPasswordToken(String token, LocalDateTime createdAt, LocalDateTime expiresAt, User user) {
+    public DeleteAccountToken(String token, LocalDateTime createdAt, LocalDateTime expiresAt, User user) {
         this.token = token;
         this.createdAt = createdAt;
         this.expiresAt = expiresAt;

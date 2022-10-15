@@ -1,5 +1,6 @@
 package efrem.datamanager.registration.token;
 
+import efrem.datamanager.user.token.DeleteAccountToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,15 +29,15 @@ public class ConfirmationTokenService {
         confirmationTokenRepository.save(token);
     }
 
-    public int setConfirmedAt(String token) {
-        return confirmationTokenRepository.updateConfirmedAt(
-                token, LocalDateTime.now());
-    }
-
 
     @Transactional
     public void updateToken(ConfirmationToken confirmationToken) {
         ConfirmationToken token = confirmationTokenRepository.findByToken(confirmationToken.getToken()).get();
         token.setExpiresAt(confirmationToken.getExpiresAt());
+    }
+
+
+    public void deleteToken(ConfirmationToken confirmationToken) {
+        confirmationTokenRepository.deleteConfirmationTokenByToken(confirmationToken.getToken());
     }
 }

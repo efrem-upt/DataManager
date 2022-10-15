@@ -15,13 +15,6 @@ public interface ResetPasswordTokenRepository extends JpaRepository<ResetPasswor
 
     @Query("SELECT c FROM ResetPasswordToken c WHERE c.user.email = ?1")
     Optional<ResetPasswordToken> findByUserEmail(String email);
-
-    @Transactional
-    @Modifying
-    @Query("UPDATE ResetPasswordToken c " +
-            "SET c.confirmedAt = ?2 " +
-            "WHERE c.token = ?1")
-    int updateConfirmedAt(String token,
-                          LocalDateTime confirmedAt);
+    Optional<ResetPasswordToken> deleteResetPasswordTokenByToken(String token);
 
 }

@@ -1,5 +1,6 @@
 package efrem.datamanager.user.token;
 
+import efrem.datamanager.registration.token.ConfirmationToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,15 +29,14 @@ public class ResetPasswordTokenService {
         resetPasswordTokenRepository.save(token);
     }
 
-    public int setConfirmedAt(String token) {
-        return resetPasswordTokenRepository.updateConfirmedAt(
-                token, LocalDateTime.now());
-    }
-
 
     @Transactional
     public void updateToken(ResetPasswordToken resetPasswordToken) {
         ResetPasswordToken token = resetPasswordTokenRepository.findByToken(resetPasswordToken.getToken()).get();
         token.setExpiresAt(resetPasswordToken.getExpiresAt());
+    }
+
+    public void deleteToken(ResetPasswordToken resetPasswordToken) {
+        resetPasswordTokenRepository.deleteResetPasswordTokenByToken(resetPasswordToken.getToken());
     }
 }

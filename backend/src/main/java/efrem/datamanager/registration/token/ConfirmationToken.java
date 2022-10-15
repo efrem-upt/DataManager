@@ -21,11 +21,9 @@ public class ConfirmationToken {
     private LocalDateTime createdAt;
     @Column(nullable = false)
     private LocalDateTime expiresAt;
-    private LocalDateTime confirmedAt;
 
     @OneToOne
     @JoinColumn(
-            nullable = false,
             name = "user_id"
     )
     private User user;
@@ -77,14 +75,6 @@ public class ConfirmationToken {
             return true;
         else
             return false;
-    }
-
-    public LocalDateTime getConfirmedAt() {
-        return confirmedAt;
-    }
-
-    public void setConfirmedAt(LocalDateTime confirmedAt) {
-        this.confirmedAt = confirmedAt;
     }
 
     public User getUser() {

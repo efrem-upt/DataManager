@@ -22,8 +22,18 @@ public class UserController {
         userService.request(email);
     }
 
-    @PostMapping(path = "reset-password")
-    public void resetPassword(@RequestParam("token") String token, @RequestBody ResetPasswordRequest resetPasswordRequest) {
+    @PostMapping(path = "reset-password/{token}")
+    public void resetPassword(@PathVariable("token") String token, @RequestBody ResetPasswordRequest resetPasswordRequest) {
         userService.resetPassword(token, resetPasswordRequest);
+    }
+
+    @PostMapping(path = "request-delete-account")
+    public void requestDelete(@RequestBody DeleteUserRequest deleteUserRequest) {
+        userService.requestDelete(deleteUserRequest.getPassword());
+    }
+
+    @DeleteMapping(path = "delete/{token}")
+    public void delete(@PathVariable("token") String token) {
+        userService.deleteUser(token);
     }
 }
