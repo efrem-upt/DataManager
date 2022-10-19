@@ -22,7 +22,8 @@ public class User implements UserDetails {
     private String email;
     private String password;
     @Enumerated(EnumType.STRING)
-    private UserRole userRole;
+    @ElementCollection(fetch = FetchType.EAGER)
+    private Set<UserRole> userRole;
     private Boolean locked = false;
     private Boolean enabled = true;
     @ElementCollection
@@ -35,7 +36,7 @@ public class User implements UserDetails {
     public User() {
     }
 
-    public User(Long id, String email, String password, UserRole userRole, Map<String, Boolean> interactions) {
+    public User(Long id, String email, String password, Set<UserRole> userRole, Map<String, Boolean> interactions) {
         this.id = id;
         this.email = email;
         this.password = password;
@@ -43,7 +44,7 @@ public class User implements UserDetails {
         this.interactions = interactions;
     }
 
-    public User(String email, String password, UserRole userRole, Map<String, Boolean> interactions) {
+    public User(String email, String password, Set<UserRole> userRole, Map<String, Boolean> interactions) {
         this.email = email;
         this.password = password;
         this.userRole = userRole;
@@ -80,11 +81,11 @@ public class User implements UserDetails {
         this.password = password;
     }
 
-    public UserRole getUserRole() {
+    public Set<UserRole> getUserRole() {
         return userRole;
     }
 
-    public void setUserRole(UserRole userRole) {
+    public void setUserRole(Set<UserRole> userRole) {
         this.userRole = userRole;
     }
 
@@ -113,10 +114,25 @@ public class User implements UserDetails {
                 '}';
     }
 
+    public boolean hasRole(String roleName) {
+        Iterator<UserRole> iterator = this.userRole.iterator();
+        while (iterator.hasNext()) {
+            UserRole role = iterator.next();
+            if (role.name().equals(roleName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        SimpleGrantedAuthority authorithy = new SimpleGrantedAuthority(userRole.name());
-        return Collections.singletonList(authorithy);
+        List<SimpleGrantedAuthority> listAuthorities = new ArrayList<SimpleGrantedAuthority>();
+        List<UserRole> userRoles = userRole.stream().toList();
+        for (int i = 0; i < userRoles.size(); i++) {
+            listAuthorities.add(new SimpleGrantedAuthority(userRoles.get(i).name()));
+        }
+        return listAuthorities;
     }
 
     @Override

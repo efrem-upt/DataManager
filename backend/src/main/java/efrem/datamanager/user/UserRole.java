@@ -2,5 +2,6 @@ package efrem.datamanager.user;
 
 public enum UserRole {
     USER,
-    MODERATOR
+    MODERATOR,
+    ADMIN
 }

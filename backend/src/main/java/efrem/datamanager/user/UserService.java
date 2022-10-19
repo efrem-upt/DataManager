@@ -134,6 +134,9 @@ public class UserService implements UserDetailsService {
         if (!userRepository.findUserByEmail(email).isPresent()) {
             throw new IllegalStateException("E-mail address not found");
         }
+        if (!userRepository.findUserByEmail(email).get().getEnabled()) {
+            throw new IllegalStateException("Account must be activated before requesting password reset");
+        }
         String token = UUID.randomUUID().toString();
         Optional<ResetPasswordToken> optionalResetPasswordToken = resetPasswordTokenService.getTokenByUserEmail(email);
         if (optionalResetPasswordToken.isPresent()) {
@@ -238,14 +241,13 @@ public class UserService implements UserDetailsService {
                 if (deleteAccountToken == deleteAccountTokenEmail) {
                     String email = authenticatedUser.getEmail();
                     userRepository.deleteUserByEmail(authenticatedUser.getEmail());
-                    deleteAccountTokenService.deleteToken(deleteAccountToken);
                     emailSender.setSubject("Your account has been deleted");
                     emailSender.send(email, deletedAccountEmail(email, ""));
 
                 } else throw new IllegalStateException("Token doesn't match the current user");
             } else
                 throw new IllegalStateException("Token doesn't match the current user");
-        } else throw new IllegalStateException("Token doesn't exist");
+        } else throw new IllegalStateException("Token doesn't match the current user");
     }
 
     @Transactional

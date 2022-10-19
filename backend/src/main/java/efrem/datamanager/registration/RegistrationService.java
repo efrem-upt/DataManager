@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Set;
 
 @Service
 public class RegistrationService {
@@ -36,7 +37,7 @@ public class RegistrationService {
         }
         if (!request.getPassword().equals(request.getConfirmPassword()))
             throw new IllegalStateException("Passwords don't match");
-        String token = userService.addUser(new User(request.getEmail(), request.getPassword(), UserRole.USER, new HashMap<String, Boolean>()));
+        String token = userService.addUser(new User(request.getEmail(), request.getPassword(), Set.of(UserRole.USER), new HashMap<String, Boolean>()));
         String link = "http://localhost:8080/registration/confirm?token=" + token;
         emailSender.setSubject("Confirm the account to start erasing your data");
         emailSender.send(request.getEmail(), buildEmail(request.getEmail(), link));

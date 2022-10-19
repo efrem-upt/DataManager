@@ -1,6 +1,8 @@
 package efrem.datamanager.registration.token;
 
 import efrem.datamanager.user.User;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
@@ -22,6 +24,7 @@ public class ConfirmationToken {
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @OneToOne
     @JoinColumn(
             name = "user_id"
