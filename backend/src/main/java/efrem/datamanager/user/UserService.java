@@ -10,6 +10,7 @@ import efrem.datamanager.user.token.ResetPasswordToken;
 import efrem.datamanager.user.token.ResetPasswordTokenService;
 import efrem.datamanager.user.validator.StrongPasswordValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -224,6 +226,14 @@ public class UserService implements UserDetailsService {
                 "  </tbody></table><div class=\"yj6qo\"></div><div class=\"adL\">\n" +
                 "\n" +
                 "</div></div>";
+    }
+
+    public User currentAuthenticatedUser() {
+        return (User) loadUserByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
+    }
+
+    public static boolean isAuthenticatedUser() {
+       return SecurityContextHolder.getContext().getAuthentication().isAuthenticated();
     }
 
     @Transactional

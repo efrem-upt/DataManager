@@ -33,7 +33,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/homepage.html").hasAuthority("USER").antMatchers("/mod.html").hasAuthority("MODERATOR").antMatchers("/console.html").hasAuthority("ADMIN").anyRequest().authenticated().and().formLogin().loginPage("/login").permitAll().successHandler(myAuthenticationSuccessHandler()).and().logout().permitAll();
+        http.authorizeRequests().antMatchers("/home").permitAll().antMatchers("/").permitAll().antMatchers("/dashboard").hasAuthority("USER").antMatchers("/mod").hasAuthority("MODERATOR").antMatchers("/console").hasAuthority("ADMIN").anyRequest().authenticated().and().formLogin().loginPage("/login").permitAll().successHandler(myAuthenticationSuccessHandler()).and().logout().permitAll();
         return http.build();
     }
 
