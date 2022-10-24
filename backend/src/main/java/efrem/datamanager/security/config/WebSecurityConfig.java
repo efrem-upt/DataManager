@@ -3,6 +3,7 @@ package efrem.datamanager.security.config;
 import efrem.datamanager.login.LoginSuccessHandler;
 import efrem.datamanager.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.oauth2.client.EnableOAuth2Sso;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -11,7 +12,6 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,7 +33,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/home").permitAll().antMatchers("/").permitAll().antMatchers("/dashboard").hasAuthority("USER").antMatchers("/mod").hasAuthority("MODERATOR").antMatchers("/console").hasAuthority("ADMIN").anyRequest().authenticated().and().formLogin().loginPage("/login").permitAll().successHandler(myAuthenticationSuccessHandler()).and().logout().permitAll();
+        http.authorizeRequests().antMatchers("/home", "/js/**", "/css/**").permitAll().antMatchers("/").permitAll().antMatchers("/dashboard").hasAuthority("USER").antMatchers("/mod").hasAuthority("MODERATOR").antMatchers("/console").hasAuthority("ADMIN").anyRequest().authenticated().and().formLogin().loginPage("/login").permitAll().successHandler(myAuthenticationSuccessHandler()).and().logout().permitAll();
         return http.build();
     }
 

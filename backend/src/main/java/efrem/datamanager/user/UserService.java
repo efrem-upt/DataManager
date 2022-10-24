@@ -10,6 +10,7 @@ import efrem.datamanager.user.token.ResetPasswordToken;
 import efrem.datamanager.user.token.ResetPasswordTokenService;
 import efrem.datamanager.user.validator.StrongPasswordValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -233,7 +234,11 @@ public class UserService implements UserDetailsService {
     }
 
     public static boolean isAuthenticatedUser() {
-       return SecurityContextHolder.getContext().getAuthentication().isAuthenticated();
+       return  SecurityContextHolder.getContext().getAuthentication() != null &&
+               SecurityContextHolder.getContext().getAuthentication().isAuthenticated() &&
+               //when Anonymous Authentication is enabled
+               !(SecurityContextHolder.getContext().getAuthentication()
+                       instanceof AnonymousAuthenticationToken);
     }
 
     @Transactional

@@ -5,6 +5,6 @@
     <title>Dashboard</title>
 </head>
 <body>
-<h1 th:text="${something}"/>
+<h1 th:if="${something != null}" th:text="${something}"/><h1 th:if="${something1 != null}" th:text="${something1}"/>
 </body>
 </html>

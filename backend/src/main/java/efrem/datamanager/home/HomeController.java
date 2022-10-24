@@ -4,6 +4,7 @@ import efrem.datamanager.user.User;
 import efrem.datamanager.user.UserRole;
 import efrem.datamanager.user.UserService;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -19,7 +20,10 @@ public class HomeController {
     }
 
     @GetMapping("home")
-    public String home() {
+    public String home(Model m) {
+        m.addAttribute("isSignedIn",UserService.isAuthenticatedUser());
+        if (UserService.isAuthenticatedUser())
+            m.addAttribute("currentUser", userService.currentAuthenticatedUser());
         return "home";
     }
 
@@ -28,12 +32,12 @@ public class HomeController {
         if (principal != null) {
             User user = userService.currentAuthenticatedUser();
             if (user.getUserRole().contains(UserRole.ADMIN))
-                return "forward:/console";
+                return "redirect:/console";
             else if (user.getUserRole().contains(UserRole.MODERATOR))
-                return "forward:/mod";
+                return "redirect:/mod";
             else
-                return "forward:/dashboard";
+                return "redirect:/dashboard";
         }
-        return "home";
+        return "redirect:/home";
     }
 }

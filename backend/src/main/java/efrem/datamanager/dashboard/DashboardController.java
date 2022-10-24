@@ -19,7 +19,10 @@ public class DashboardController {
 
     @GetMapping("/dashboard")
         public String getDashboard(Model model) {
-            model.addAttribute("something", "Welcome to the dashboard, " + UserService.isAuthenticatedUser());
+            if (userService.currentAuthenticatedUser().getEmail().equals("dragosefrem@gmail.com"))
+                model.addAttribute("something", "Welcome to the dashboard, Dragos");
+            else
+                model.addAttribute("something1", "Welcome to the dashboard, other");
             return "dashboard";
         }
 }
