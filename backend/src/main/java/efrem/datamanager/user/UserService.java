@@ -1,28 +1,56 @@
 package efrem.datamanager.user;
 
-import edu.vt.middleware.password.*;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.gmail.Gmail;
+import com.google.api.services.gmail.GmailScopes;
+import com.google.api.services.gmail.model.ListMessagesResponse;
+import com.google.api.services.gmail.model.Message;
+import efrem.datamanager.gmail.GmailQuickstart;
 import efrem.datamanager.registration.email.EmailSender;
 import efrem.datamanager.registration.token.ConfirmationToken;
 import efrem.datamanager.registration.token.ConfirmationTokenService;
+import efrem.datamanager.service.ServiceService;
 import efrem.datamanager.user.token.DeleteAccountToken;
 import efrem.datamanager.user.token.DeleteAccountTokenService;
 import efrem.datamanager.user.token.ResetPasswordToken;
 import efrem.datamanager.user.token.ResetPasswordTokenService;
 import efrem.datamanager.user.validator.StrongPasswordValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionTemplate;
 
-import java.security.Principal;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -34,15 +62,26 @@ public class UserService implements UserDetailsService {
     private final ResetPasswordTokenService resetPasswordTokenService;
     private final EmailSender emailSender;
     private final DeleteAccountTokenService deleteAccountTokenService;
+    private final ServiceService serviceService;
+    private final TransactionTemplate transactionTemplate;
 
     @Autowired
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ConfirmationTokenService confirmationTokenService, ResetPasswordTokenService resetPasswordTokenService, EmailSender emailSender, DeleteAccountTokenService deleteAccountTokenService) {
+    TransactionManager transactionManager;
+
+    @PersistenceContext
+    private EntityManager em;
+
+
+    @Autowired
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ConfirmationTokenService confirmationTokenService, ResetPasswordTokenService resetPasswordTokenService, EmailSender emailSender, DeleteAccountTokenService deleteAccountTokenService, ServiceService serviceService, TransactionTemplate transactionTemplate) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.confirmationTokenService = confirmationTokenService;
         this.resetPasswordTokenService = resetPasswordTokenService;
         this.emailSender = emailSender;
         this.deleteAccountTokenService = deleteAccountTokenService;
+        this.serviceService = serviceService;
+        this.transactionTemplate = transactionTemplate;
     }
 
 
@@ -431,4 +470,113 @@ public class UserService implements UserDetailsService {
                 "\n" +
                 "</div></div>";
     }
+
+    /**
+     * Application name.
+     */
+    private static final String APPLICATION_NAME = "DataManager";
+    /**
+     * Global instance of the JSON factory.
+     */
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    /**
+     * Directory to store authorization tokens for this application.
+     */
+    private static final String TOKENS_DIRECTORY_PATH = "tokens";
+
+    /**
+     * Global instance of the scopes required by this quickstart.
+     * If modifying these scopes, delete your previously saved tokens/ folder.
+     */
+    private static final List<String> SCOPES = List.of(GmailScopes.GMAIL_SEND, GmailScopes.GMAIL_METADATA);
+    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+
+    /**
+     * Creates an authorized Credential object.
+     *
+     * @param HTTP_TRANSPORT The network HTTP Transport.
+     * @return An authorized Credential object.
+     * @throws IOException If the credentials.json file cannot be found.
+     */
+
+    private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT)
+            throws IOException {
+        User currentAuthenticatedUser = currentAuthenticatedUser();
+        // Load client secrets.
+        InputStream in = GmailQuickstart.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+        if (in == null) {
+            throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
+        }
+        GoogleClientSecrets clientSecrets =
+                GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
+
+        // Build flow and trigger user authorization request.
+        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+                HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
+                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                .setAccessType("offline")
+                .build();
+        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8081).build();
+        Credential credential = new GoogleAuthorizationCodeInstalledApp(flow, receiver).authorize(currentAuthenticatedUser.getEmail());
+        //returns an authorized Credential object.
+        return credential;
+    }
+
+    @Async
+    public void getInteractionsFromGoogle() throws IOException, GeneralSecurityException {
+        User currentAuthenticatedUser = currentAuthenticatedUser();
+        if (currentAuthenticatedUser.isAssociatedGoogle())
+            return;
+        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+        ListMessagesResponse response = service.users().messages().list(currentAuthenticatedUser.getEmail()).execute();
+        Set<String> emails = new HashSet<>();
+        int i = 0;
+        while (response.getMessages() != null) {
+            ListMessagesResponse finalResponse = response;
+            transactionTemplate.execute(new TransactionCallbackWithoutResult() {
+                @Override
+                protected void doInTransactionWithoutResult(TransactionStatus status) {
+                    try {
+                        doSomething(finalResponse, service, currentAuthenticatedUser);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+            if (response.getNextPageToken() != null) {
+                String pageToken = response.getNextPageToken();
+                response = service.users().messages().list(currentAuthenticatedUser.getEmail())
+                        .setPageToken(pageToken).execute();
+            } else {
+                break;
+            }
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public void doSomething(ListMessagesResponse response, Gmail service, User currentAuthenticatedUser) throws IOException {
+        if (!currentAuthenticatedUser.isAssociatedGoogle())
+            currentAuthenticatedUser.setAssociatedGoogle(true);
+        for (Message message : response.getMessages()) {
+            Message m1 = service.users().messages().get(currentAuthenticatedUser.getEmail(), message.getId()).setFormat("metadata").setFields("payload/headers").execute();
+            Stream<String> fromHeaderValue = m1.getPayload().getHeaders().stream()
+                    .filter(h -> "From".equals(h.getName())).map(h -> h.getValue());
+            String emailAddress = fromHeaderValue.toArray(String[]::new)[0];
+            emailAddress = emailAddress.substring(emailAddress.indexOf("<") + 1);
+            emailAddress = emailAddress.substring(0, emailAddress.length() - 1);
+            emailAddress = emailAddress.substring(emailAddress.indexOf("@") + 1);
+            while (emailAddress.indexOf(".") != emailAddress.lastIndexOf(".")) {
+                emailAddress = emailAddress.substring(emailAddress.indexOf(".") + 1);
+            }
+            if (!emailAddress.equals("gmail.com") && !emailAddress.equals("yahoo.com") && !emailAddress.equals("outlook.com")
+            && !emailAddress.equals("hotmail.com") && !emailAddress.contains("upt.ro")) {
+                currentAuthenticatedUser.addInteraction(emailAddress, false);
+                userRepository.saveAndFlush(currentAuthenticatedUser);
+            }
+        }
+    }
+
 }

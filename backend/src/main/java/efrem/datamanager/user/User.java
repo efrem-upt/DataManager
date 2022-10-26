@@ -21,12 +21,13 @@ public class User implements UserDetails {
     private Long id;
     private String email;
     private String password;
+    private boolean associatedGoogle = false;
     @Enumerated(EnumType.STRING)
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<UserRole> userRole;
     private Boolean locked = false;
     private Boolean enabled = true;
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "services_used",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
     @MapKeyColumn(name = "service_name")
@@ -69,12 +70,24 @@ public class User implements UserDetails {
         this.email = email;
     }
 
+    public boolean isAssociatedGoogle() {
+        return associatedGoogle;
+    }
+
+    public void setAssociatedGoogle(boolean associatedGoogle) {
+        this.associatedGoogle = associatedGoogle;
+    }
+
     public Map<String, Boolean> getInteractions() {
         return interactions;
     }
 
     public void setInteractions(Map<String, Boolean> interactions) {
         this.interactions = interactions;
+    }
+
+    public void addInteraction(String key, Boolean done) {
+        interactions.put(key, done);
     }
 
     public void setPassword(String password) {
