@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.ui.Model;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -532,8 +533,6 @@ public class UserService implements UserDetailsService {
                 .setApplicationName(APPLICATION_NAME)
                 .build();
         ListMessagesResponse response = service.users().messages().list(currentAuthenticatedUser.getEmail()).execute();
-        Set<String> emails = new HashSet<>();
-        int i = 0;
         while (response.getMessages() != null) {
             ListMessagesResponse finalResponse = response;
             transactionTemplate.execute(new TransactionCallbackWithoutResult() {

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -23,7 +24,8 @@ public class LoginController {
     }
 
     @GetMapping
-    public String login(Principal principal) {
+    public String login(Principal principal, Model model) {
+        model.addAttribute("isSignedIn",UserService.isAuthenticatedUser());
         if (principal!=null && ((Authentication)principal).isAuthenticated()) {
             User authenticatedUser = (User) userService.loadUserByUsername(SecurityContextHolder.getContext().getAuthentication().getName());
 

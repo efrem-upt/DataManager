@@ -23,15 +23,16 @@ public class DashboardController {
 
     @GetMapping("/dashboard")
         public String getDashboard(Model model) {
-            if (userService.currentAuthenticatedUser().getEmail().equals("dragosefrem@gmail.com"))
-                model.addAttribute("something", "Welcome to the dashboard, Dragos");
-            else
-                model.addAttribute("something1", "Welcome to the dashboard, other");
+            model.addAttribute("isSignedIn",UserService.isAuthenticatedUser());
+            model.addAttribute("user", userService.currentAuthenticatedUser());
             return "dashboard";
         }
     @GetMapping("/dashboard/google")
-        public void getGoogle() throws GeneralSecurityException, IOException {
+        public String getGoogle(Model model) throws GeneralSecurityException, IOException {
+            model.addAttribute("isSignedIn",UserService.isAuthenticatedUser());
+            model.addAttribute("user", userService.currentAuthenticatedUser());
             userService.getInteractionsFromGoogle();
+            return "google";
     }
 
 }

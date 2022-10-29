@@ -110,7 +110,7 @@ html {
     border: 1px solid #8db863 ;
     padding: 25px;
     margin:25px;
-    background-color: #212529;
+    background-color: #333;
     border-radius: 5%;
 }
 
@@ -133,3 +133,25 @@ span {
     }
 }
 
+#loginBox {
+    max-width: 40vw;
+    min-height: 40vh;
+    display: flex;
+    row-gap: 200px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    border: 1px solid #8db863 ;
+    padding: 25px;
+    overflow: clip;
+    background-color: #333;
+    border-radius: 5%;
+}
+
+#loginBoxPosition {
+    width: 100vw;
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

@@ -21,7 +21,6 @@ import java.util.logging.Logger;
 public class GoogleAuthorizationCodeInstalledApp {
     private final AuthorizationCodeFlow flow;
     private final VerificationCodeReceiver receiver;
-    private static final Logger LOGGER = Logger.getLogger(com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp.class.getName());
     private final GoogleAuthorizationCodeInstalledApp.Browser browser;
 
     public GoogleAuthorizationCodeInstalledApp(AuthorizationCodeFlow flow, VerificationCodeReceiver receiver) {

@@ -110,7 +110,7 @@ html {
     border: 1px solid #8db863 ;
     padding: 25px;
     margin:25px;
-    background-color: #212529;
+    background-color: #333;
     border-radius: 5%;
 }
 
@@ -133,3 +133,11 @@ span {
     }
 }
 
+#googleAuthorizationContainer {
+    color: white !important;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
