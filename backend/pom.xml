@@ -95,6 +95,18 @@
             <artifactId>google-api-services-gmail</artifactId>
             <version>v1-rev20220404-2.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-oauth2</artifactId>
+            <version>v2-rev20200213-1.32.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20220924</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -38,7 +38,7 @@ public class RegistrationService {
         if (!request.getPassword().equals(request.getConfirmPassword()))
             throw new IllegalStateException("Passwords don't match");
         String token = userService.addUser(new User(request.getEmail(), request.getPassword(), Set.of(UserRole.USER), new TreeMap<String, Boolean>()));
-        String link = "http://localhost:8080/registration/confirm?token=" + token;
+        String link = "http://localhost:8080/register/confirm?token=" + token;
         emailSender.setSubject("Confirm the account to start erasing your data");
         emailSender.send(request.getEmail(), buildEmail(request.getEmail(), link));
         return token;
@@ -49,12 +49,12 @@ public class RegistrationService {
         ConfirmationToken confirmationToken = confirmationTokenService
                 .getToken(token)
                 .orElseThrow(() ->
-                        new IllegalStateException("token not found"));
+                        new IllegalStateException("Token not found"));
 
         LocalDateTime expiredAt = confirmationToken.getExpiresAt();
 
         if (expiredAt.isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("token expired");
+            throw new IllegalStateException("Token expired");
         }
 
         confirmationTokenService.deleteToken(confirmationToken);

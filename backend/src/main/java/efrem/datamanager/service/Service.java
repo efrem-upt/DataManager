@@ -14,19 +14,22 @@ public class Service {
     private Long id;
     private String domain;
     private String contact_email;
+    private boolean suggested = false;
 
     public Service() {
     }
 
-    public Service(Long id, String domain, String contact_email) {
+    public Service(Long id, String domain, String contact_email, boolean suggested) {
         this.id = id;
         this.domain = domain;
         this.contact_email = contact_email;
+        this.suggested = suggested;
     }
 
-    public Service(String domain, String contact_email) {
+    public Service(String domain, String contact_email, boolean suggested) {
         this.domain = domain;
         this.contact_email = contact_email;
+        this.suggested = suggested;
     }
 
     public Long getId() {
@@ -51,6 +54,14 @@ public class Service {
 
     public void setContact_email(String contact_email) {
         this.contact_email = contact_email;
+    }
+
+    public boolean isSuggested() {
+        return suggested;
+    }
+
+    public void setSuggested(boolean suggested) {
+        this.suggested = suggested;
     }
 
     @Override

@@ -14,6 +14,8 @@ import com.google.api.services.gmail.Gmail;
 import com.google.api.services.gmail.GmailScopes;
 import com.google.api.services.gmail.model.ListMessagesResponse;
 import com.google.api.services.gmail.model.Message;
+import com.google.api.services.oauth2.Oauth2;
+import com.google.api.services.oauth2.model.Userinfo;
 import efrem.datamanager.gmail.GmailQuickstart;
 import efrem.datamanager.registration.email.EmailSender;
 import efrem.datamanager.registration.token.ConfirmationToken;
@@ -24,6 +26,7 @@ import efrem.datamanager.user.token.DeleteAccountTokenService;
 import efrem.datamanager.user.token.ResetPasswordToken;
 import efrem.datamanager.user.token.ResetPasswordTokenService;
 import efrem.datamanager.user.validator.StrongPasswordValidator;
+import org.apache.juli.logging.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
@@ -44,14 +47,17 @@ import org.springframework.ui.Model;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
+import java.net.URL;
+import java.nio.charset.Charset;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -93,19 +99,6 @@ public class UserService implements UserDetailsService {
     public String addUser(User user) {
         Optional<User> userOptional = userRepository.findUserByEmail(user.getEmail());
         if (userOptional.isPresent()) {
-            /*
-            Optional<ConfirmationToken> optionalConfirmationToken = confirmationTokenService.getTokenByUserEmail(user.getEmail());
-            if (optionalConfirmationToken.isPresent()) {
-                ConfirmationToken existentToken = optionalConfirmationToken.get();
-                if (existentToken.isExpired()) {
-                    existentToken.setExpiresAt(LocalDateTime.now().plusMinutes(15));
-                    existentToken.setToken(UUID.randomUUID().toString());
-                    confirmationTokenService.updateToken(existentToken);
-                    return existentToken.getToken();
-                } else
-                    throw new IllegalStateException("You must wait 15 minutes before requesting a new confirmation e-mail");
-            }
-             */
                 throw new IllegalStateException("E-mail address is taken");
         } else {
             String password = user.getPassword();
@@ -489,7 +482,7 @@ public class UserService implements UserDetailsService {
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
-    private static final List<String> SCOPES = List.of(GmailScopes.GMAIL_SEND, GmailScopes.GMAIL_METADATA);
+    private static final List<String> SCOPES = List.of("https://www.googleapis.com/auth/userinfo.email", GmailScopes.GMAIL_SEND, GmailScopes.GMAIL_METADATA);
     private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
     /**
@@ -499,6 +492,7 @@ public class UserService implements UserDetailsService {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
+
 
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT)
             throws IOException {
@@ -523,23 +517,53 @@ public class UserService implements UserDetailsService {
         return credential;
     }
 
+    private static String readAll(Reader rd) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        int cp;
+        while ((cp = rd.read()) != -1) {
+            sb.append((char) cp);
+        }
+        return sb.toString();
+    }
+
+    public static JSONObject readJsonFromUrl(String url) throws IOException, JSONException {
+        InputStream is = new URL(url).openStream();
+        try {
+            BufferedReader rd = new BufferedReader(new InputStreamReader(is, Charset.forName("UTF-8")));
+            String jsonText = readAll(rd);
+            JSONObject json = new JSONObject(jsonText);
+            return json;
+        } finally {
+            is.close();
+        }
+    }
+
     @Async
     public void getInteractionsFromGoogle() throws IOException, GeneralSecurityException {
         User currentAuthenticatedUser = currentAuthenticatedUser();
         if (currentAuthenticatedUser.isAssociatedGoogle())
             return;
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+        Credential credential = getCredentials(HTTP_TRANSPORT);
+        Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
-        ListMessagesResponse response = service.users().messages().list(currentAuthenticatedUser.getEmail()).execute();
+        String accessToken = credential.getAccessToken();
+        String url = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=";
+        url = url + accessToken;
+        // TODO: Get JSON response from URL and extract user email to use as userId for methods below
+        Logger logger = Logger.getLogger("myLog");
+        JSONObject json = readJsonFromUrl(url);
+        String connectedGoogleAccountEmail = (String) json.get("email");
+        logger.info(connectedGoogleAccountEmail);
+        ListMessagesResponse response = service.users().messages().list(connectedGoogleAccountEmail).execute();
         while (response.getMessages() != null) {
             ListMessagesResponse finalResponse = response;
             transactionTemplate.execute(new TransactionCallbackWithoutResult() {
                 @Override
                 protected void doInTransactionWithoutResult(TransactionStatus status) {
                     try {
-                        doSomething(finalResponse, service, currentAuthenticatedUser);
+                        doSomething(finalResponse, service, currentAuthenticatedUser, connectedGoogleAccountEmail);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -547,7 +571,7 @@ public class UserService implements UserDetailsService {
             });
             if (response.getNextPageToken() != null) {
                 String pageToken = response.getNextPageToken();
-                response = service.users().messages().list(currentAuthenticatedUser.getEmail())
+                response = service.users().messages().list(connectedGoogleAccountEmail)
                         .setPageToken(pageToken).execute();
             } else {
                 break;
@@ -556,11 +580,11 @@ public class UserService implements UserDetailsService {
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
-    public void doSomething(ListMessagesResponse response, Gmail service, User currentAuthenticatedUser) throws IOException {
+    public void doSomething(ListMessagesResponse response, Gmail service, User currentAuthenticatedUser, String connectedGoogleAccountEmail) throws IOException {
         if (!currentAuthenticatedUser.isAssociatedGoogle())
             currentAuthenticatedUser.setAssociatedGoogle(true);
         for (Message message : response.getMessages()) {
-            Message m1 = service.users().messages().get(currentAuthenticatedUser.getEmail(), message.getId()).setFormat("metadata").setFields("payload/headers").execute();
+            Message m1 = service.users().messages().get(connectedGoogleAccountEmail, message.getId()).setFormat("metadata").setFields("payload/headers").execute();
             Stream<String> fromHeaderValue = m1.getPayload().getHeaders().stream()
                     .filter(h -> "From".equals(h.getName())).map(h -> h.getValue());
             String emailAddress = fromHeaderValue.toArray(String[]::new)[0];

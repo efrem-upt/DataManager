@@ -26,7 +26,7 @@ public class User implements UserDetails {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<UserRole> userRole;
     private Boolean locked = false;
-    private Boolean enabled = true;
+    private Boolean enabled = false;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "services_used",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
