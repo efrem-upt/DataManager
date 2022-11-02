@@ -19,8 +19,12 @@ public class ServiceService {
         this.serviceRepository = serviceRepository;
     }
 
-    public efrem.datamanager.service.Service loadServiceByDomain(String domain) throws ServiceNotFoundException {
-        return serviceRepository.findServiceByDomainAndSuggestedIsFalse(domain).orElseThrow(() ->  new ServiceNotFoundException(String.format("Domain not found: %s", domain)));
+    public efrem.datamanager.service.Service loadServiceByDomain(String domain) {
+        Optional<efrem.datamanager.service.Service> optionalService = serviceRepository.findServiceByDomainAndSuggestedIsFalse(domain);
+        if (optionalService.isPresent())
+            return optionalService.get();
+        else
+            return null;
     }
 
     public List<efrem.datamanager.service.Service> loadSuggestions(String domain) throws ServiceNotFoundException {

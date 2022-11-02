@@ -42,7 +42,8 @@
         <tr th:each="instance : ${user.interactions}">
             <td th:text="${instance.key}"></td>
             <td th:text="${instance.value}"></td>
-            <td th:text="blabla"></td>
+            <td th:if="${services.loadServiceByDomain(instance.key) != null and #strings.isEmpty(services.loadServiceByDomain(instance.key).getContact_email()) == false and services.loadServiceByDomain(instance.key).suggested == false}"><button type="button" class="btn btn-outline-primary">Send mail</button></td>
+            <td th:if="${services.loadServiceByDomain(instance.key) == null or #strings.isEmpty(services.loadServiceByDomain(instance.key).getContact_email()) == true or services.loadServiceByDomain(instance.key).suggested == true}"><button type="button" class="btn btn-outline-warning">Suggest mail</button></td>
         </tr>
         </tbody>
         <table>

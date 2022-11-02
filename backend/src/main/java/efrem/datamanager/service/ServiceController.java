@@ -24,11 +24,11 @@ public class ServiceController {
 
     @GetMapping(path = "/find/{domain}")
     public List<Service> get(@PathVariable String domain) {
-        try {
-            return Collections.singletonList(serviceService.loadServiceByDomain(domain));
-        } catch (ServiceNotFoundException e) {
+        Service service = serviceService.loadServiceByDomain(domain);
+        if (service != null)
+            return Collections.singletonList(service);
+        else
             return List.of();
-        }
     }
 
     @GetMapping(path = "/find/suggestions/{domain}")
