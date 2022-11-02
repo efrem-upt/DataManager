@@ -156,9 +156,19 @@ public class UserService implements UserDetailsService {
             if (!resetPasswordRequest.getNewPassword().equals(resetPasswordRequest.getNewPasswordConfirmed())) {
                 throw new IllegalStateException("Entered passwords do not match");
             } else {
-                String password = bCryptPasswordEncoder.encode(resetPasswordRequest.getNewPassword());
-                userRepository.updatePassword(resetPasswordRequest.getEmail(), password);
-                resetPasswordTokenService.deleteToken(resetPasswordToken);
+                String passwordErrorMessage = StrongPasswordValidator.result(resetPasswordRequest.getNewPassword());
+                if (passwordErrorMessage.isEmpty()) {
+                    Optional<User> userToSearch = userRepository.findUserByEmail(resetPasswordRequest.getEmail());
+                    if (userToSearch.isPresent() && bCryptPasswordEncoder.matches(resetPasswordRequest.getNewPassword(), userToSearch.get().getPassword())) {
+                        throw new IllegalStateException("Password must not be the same as the old password");
+                    }
+                    String password = bCryptPasswordEncoder.encode(resetPasswordRequest.getNewPassword());
+                    userRepository.updatePassword(resetPasswordRequest.getEmail(), password);
+                    resetPasswordTokenService.deleteToken(resetPasswordToken);
+                } else {
+                    throw new IllegalStateException(passwordErrorMessage);
+                }
+
             }
         } else throw new IllegalStateException("Token is not valid for entered e-mail");
 
