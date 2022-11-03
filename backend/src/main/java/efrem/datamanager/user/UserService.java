@@ -21,6 +21,7 @@ import efrem.datamanager.registration.email.EmailSender;
 import efrem.datamanager.registration.token.ConfirmationToken;
 import efrem.datamanager.registration.token.ConfirmationTokenService;
 import efrem.datamanager.service.ServiceService;
+import efrem.datamanager.user.email.SendMessage;
 import efrem.datamanager.user.token.DeleteAccountToken;
 import efrem.datamanager.user.token.DeleteAccountTokenService;
 import efrem.datamanager.user.token.ResetPasswordToken;
@@ -45,6 +46,7 @@ import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.ui.Model;
 
+import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.io.*;
@@ -548,16 +550,21 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    private Gmail userServiceGmail;
+    private String userConnectedGoogleEmail;
+
     @Async
     public void getInteractionsFromGoogle() throws IOException, GeneralSecurityException {
+
         User currentAuthenticatedUser = currentAuthenticatedUser();
-        if (currentAuthenticatedUser.isAssociatedGoogle())
+        if (userServiceGmail != null || currentAuthenticatedUser.isAssociatedGoogle())
             return;
         final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
         Credential credential = getCredentials(HTTP_TRANSPORT);
         Gmail service = new Gmail.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+        userServiceGmail = service;
         String accessToken = credential.getAccessToken();
         String url = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=";
         url = url + accessToken;
@@ -565,6 +572,7 @@ public class UserService implements UserDetailsService {
         Logger logger = Logger.getLogger("myLog");
         JSONObject json = readJsonFromUrl(url);
         String connectedGoogleAccountEmail = (String) json.get("email");
+        userConnectedGoogleEmail = connectedGoogleAccountEmail;
         logger.info(connectedGoogleAccountEmail);
         ListMessagesResponse response = service.users().messages().list(connectedGoogleAccountEmail).execute();
         while (response.getMessages() != null) {
@@ -612,4 +620,80 @@ public class UserService implements UserDetailsService {
         }
     }
 
+    private String removeServiceEmailEN(String nameOfService, String nameOfUser) {
+        return "<div style=\"font-family:Helvetica,Arial,sans-serif;font-size:16px;margin:0;color:#0b0c0c\">\n" +
+                "\n" +
+                "<span style=\"display:none;font-size:1px;color:#fff;max-height:0\"></span>\n" +
+                "\n" +
+                "  <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;min-width:100%;width:100%!important\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\">\n" +
+                "    <tbody><tr>\n" +
+                "      <td width=\"100%\" height=\"53\" bgcolor=\"#0b0c0c\">\n" +
+                "        \n" +
+                "        <table role=\"presentation\" width=\"100%\" style=\"border-collapse:collapse;max-width:580px\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" align=\"center\">\n" +
+                "          <tbody><tr>\n" +
+                "            <td width=\"70\" bgcolor=\"#0b0c0c\" valign=\"middle\">\n" +
+                "                <table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse\">\n" +
+                "                  <tbody><tr>\n" +
+                "                    <td style=\"padding-left:10px\">\n" +
+                "                  \n" +
+                "                    </td>\n" +
+                "                    <td style=\"font-size:28px;line-height:1.315789474;Margin-top:4px;padding-left:10px\">\n" +
+                "                      <span style=\"font-family:Helvetica,Arial,sans-serif;font-weight:700;color:#ffffff;text-decoration:none;vertical-align:top;display:inline-block\">Personal Data Removal Request</span>\n" +
+                "                    </td>\n" +
+                "                  </tr>\n" +
+                "                </tbody></table>\n" +
+                "              </a>\n" +
+                "            </td>\n" +
+                "          </tr>\n" +
+                "        </tbody></table>\n" +
+                "        \n" +
+                "      </td>\n" +
+                "    </tr>\n" +
+                "  </tbody></table>\n" +
+                "  <table role=\"presentation\" class=\"m_-6186904992287805515content\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;max-width:580px;width:100%!important\" width=\"100%\">\n" +
+                "    <tbody><tr>\n" +
+                "      <td width=\"10\" height=\"10\" valign=\"middle\"></td>\n" +
+                "      <td>\n" +
+                "        \n" +
+                "                <table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse\">\n" +
+                "                  <tbody><tr>\n" +
+                "                    <td bgcolor=\"#1D70B8\" width=\"100%\" height=\"10\"></td>\n" +
+                "                  </tr>\n" +
+                "                </tbody></table>\n" +
+                "        \n" +
+                "      </td>\n" +
+                "      <td width=\"10\" valign=\"middle\" height=\"10\"></td>\n" +
+                "    </tr>\n" +
+                "  </tbody></table>\n" +
+                "\n" +
+                "\n" +
+                "\n" +
+                "  <table role=\"presentation\" class=\"m_-6186904992287805515content\" align=\"center\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;max-width:580px;width:100%!important\" width=\"100%\">\n" +
+                "    <tbody><tr>\n" +
+                "      <td height=\"30\"><br></td>\n" +
+                "    </tr>\n" +
+                "    <tr>\n" +
+                "      <td width=\"10\" valign=\"middle\"><br></td>\n" +
+                "      <td style=\"font-family:Helvetica,Arial,sans-serif;font-size:19px;line-height:1.315789474;max-width:560px\">\n" +
+                "        \n" +
+                "            <p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\">Hi " + nameOfService + ",</p><p style=\"Margin:0 0 20px 0;font-size:19px;line-height:25px;color:#0b0c0c\">I would like to delete all my data from your systems. My e-mail is: " + nameOfUser + ".</blockquote>\n <p>Please let me know when my request has been completed.</p> <p>Thank you.</p>" +
+                "        \n" +
+                "      </td>\n" +
+                "      <td width=\"10\" valign=\"middle\"><br></td>\n" +
+                "    </tr>\n" +
+                "    <tr>\n" +
+                "      <td height=\"30\"><br></td>\n" +
+                "    </tr>\n" +
+                "  </tbody></table><div class=\"yj6qo\"></div><div class=\"adL\">\n" +
+                "\n" +
+                "</div></div>";
+    }
+
+    @Transactional
+    public void sendEmailToRemoveService(String domain, String contactMail) throws MessagingException, IOException {
+        SendMessage.sendEmail(userConnectedGoogleEmail, contactMail, "Personal Data Removal Request", removeServiceEmailEN(contactMail, userConnectedGoogleEmail), userServiceGmail);
+        currentAuthenticatedUser().getInteractions().replace(domain, false, true);
+    }
+
 }
+
