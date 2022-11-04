@@ -12,4 +12,7 @@ public interface ServiceRepository extends JpaRepository<Service, Long> {
     Optional<Service> findServiceByDomainAndSuggestedIsFalse(String domain);
     Optional<List<Service>> findServiceByDomain(String domain);
     Optional<List<Service>> findServiceByDomainAndSuggestedIsTrue(String domain);
+    Optional<List<Service>> findServiceBySuggested(boolean suggested);
+    Optional<Service> findServiceById(Long id);
+    Optional<Service> deleteServiceById(Long id);
 }

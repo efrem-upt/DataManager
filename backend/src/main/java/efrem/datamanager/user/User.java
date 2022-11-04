@@ -27,6 +27,7 @@ public class User implements UserDetails {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<UserRole> userRole;
     private Boolean locked = false;
+    private short numberOfRoles = 0;
     private Boolean enabled = true;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "services_used",
@@ -52,6 +53,7 @@ public class User implements UserDetails {
         this.userRole = userRole;
         this.locked = locked;
         this.enabled = enabled;
+        this.numberOfRoles = (short) userRole.size();
         this.interactions = interactions;
     }
 
@@ -85,6 +87,14 @@ public class User implements UserDetails {
 
     public void setInteractions(Map<String, Boolean> interactions) {
         this.interactions = interactions;
+    }
+
+    public short getNumberOfRoles() {
+        return numberOfRoles;
+    }
+
+    public void setNumberOfRoles(short numberOfRoles) {
+        this.numberOfRoles = numberOfRoles;
     }
 
     public void addInteraction(String key, Boolean done) {

@@ -94,6 +94,14 @@ public class UserService implements UserDetailsService {
 
 
     public List<User> getUsers() {
+        Optional<List<User>> userList = userRepository.findAllByUserRoleIsNotAndUserRoleIsNotAndNumberOfRolesIs(UserRole.ADMIN, UserRole.MODERATOR, (short) 1);
+        if (userList.isPresent())
+            return userList.get();
+        else
+            return List.of();
+    }
+
+    public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
@@ -694,6 +702,13 @@ public class UserService implements UserDetailsService {
         currentAuthenticatedUser().updateTransactionTrue(domain);
         userRepository.saveAndFlush(currentAuthenticatedUser());
     }
+
+
+    @Transactional
+    public void deleteUserFromConsole(String email) {
+        userRepository.deleteUserByEmail(email);
+    }
+
 
 }
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 // interface responsible for data access
@@ -17,6 +18,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findUserByEmail(String email);
     Optional<User> deleteUserByEmail(String email);
+    Optional<List<User>> findAllByUserRoleIsNotAndUserRoleIsNotAndNumberOfRolesIs(UserRole userRole1, UserRole userRole2, short numberOfRoles);
 
     @Transactional
     @Modifying

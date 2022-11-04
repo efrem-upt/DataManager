@@ -16,12 +16,12 @@
 </label>
 <ul id="main-menu" class="sm sm-mint text-light bg-dark">
     <li><a href="/home">Home</a></li>
-    <li th:if="${isSignedIn == false}"><a href="#">Register</a></li>
+    <li th:if="${isSignedIn == false}"><a href="/register">Register</a></li>
     <li th:if="${isSignedIn == false}"><a href="/login">Login</a></li>
-    <li th:if="${isSignedIn == true}"><a href="#">Dashboard</a></li>
-    <li th:if="${isSignedIn == true and #sets.contains(user.userRole,T(efrem.datamanager.user.UserRole).MODERATOR)}"><a href="#">Suggestions</a></li>
-    <li th:if="${isSignedIn == true and #sets.contains(user.userRole,T(efrem.datamanager.user.UserRole).ADMIN)}"><a href="#">Console</a></li>
-    <li th:if="${isSignedIn == true}"><a href="#">Logout</a></li>
+    <li th:if="${isSignedIn == true}"><a href="/dashboard">Dashboard</a></li>
+    <li th:if="${isSignedIn == true and #sets.contains(user.userRole,T(efrem.datamanager.user.UserRole).MODERATOR)}"><a href="/mod">Suggestions</a></li>
+    <li th:if="${isSignedIn == true and #sets.contains(user.userRole,T(efrem.datamanager.user.UserRole).ADMIN)}"><a href="/console">Console</a></li>
+    <li th:if="${isSignedIn == true}"><a href="/logout">Logout</a></li>
 </ul>
 
 <div th:switch="${user.associatedGoogle}" id = "googleAuthorizationContainer" class="container">

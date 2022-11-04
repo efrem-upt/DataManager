@@ -23,7 +23,7 @@ public class UserRestController {
     @GetMapping(path = "user/get-interactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Interactions> getInteractions() {
         List<Interactions> list = userService.currentAuthenticatedUser().getInteractions().entrySet().stream()
-                .map((e)->new Interactions(e.getKey(),e.getValue(), serviceService.loadServiceByDomain(e.getKey()) == null))
+                .map((e)->new Interactions(e.getKey(),e.getValue(), serviceService.loadServiceByDomain(e.getKey()) == null, serviceService.loadServiceByDomain(e.getKey()) != null ? serviceService.loadServiceByDomain(e.getKey()).getContact_email() : ""))
                 .collect(Collectors.toList());
         return list;
     }
@@ -39,5 +39,10 @@ public class UserRestController {
         else
             possibleAction.setAction("Suggest");
         return possibleAction;
+    }
+
+    @GetMapping(path = "user/get-users", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<MinimalUserData> getUsers() {
+        return userService.getUsers().stream().map((e) -> new MinimalUserData(e.getEmail(), "")).collect(Collectors.toList());
     }
 }

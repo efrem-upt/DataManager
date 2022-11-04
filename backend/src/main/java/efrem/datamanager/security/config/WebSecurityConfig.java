@@ -34,7 +34,7 @@ public class WebSecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeRequests().antMatchers("/home", "/register/**", "/js/**", "/css/**", "/photos/**", "/forgot-password", "/request-reset-password", "/reset-password/**").permitAll().antMatchers("/").permitAll().antMatchers("/dashboard", "/dashboard/google/**", "/service/**", "/user/**").hasAuthority("USER").antMatchers("/mod").hasAuthority("MODERATOR").antMatchers("/console").hasAuthority("ADMIN").anyRequest().authenticated().and().formLogin().loginPage("/login").permitAll().successHandler(myAuthenticationSuccessHandler()).and().logout().logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET")).permitAll().and().csrf().disable();
+        http.authorizeRequests().antMatchers("/home", "/register/**", "/js/**", "/css/**", "/photos/**", "/forgot-password", "/request-reset-password", "/reset-password/**").permitAll().antMatchers("/").permitAll().antMatchers("/dashboard", "/dashboard/google/**", "/service/**", "/user/**").hasAuthority("USER").antMatchers("/mod").hasAuthority("MODERATOR").antMatchers("/console/**").hasAuthority("ADMIN").anyRequest().authenticated().and().formLogin().loginPage("/login").permitAll().successHandler(myAuthenticationSuccessHandler()).and().logout().logoutRequestMatcher(new AntPathRequestMatcher("/logout", "GET")).permitAll().and().csrf().disable();
         return http.build();
     }
 

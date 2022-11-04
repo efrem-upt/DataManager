@@ -1,7 +1,9 @@
 package efrem.datamanager.service;
 
+import efrem.datamanager.user.User;
 import efrem.datamanager.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,13 +30,25 @@ public class ServiceService {
             return null;
     }
 
-    public List<efrem.datamanager.service.Service> loadSuggestions(String domain) throws ServiceNotFoundException {
-        return serviceRepository.findServiceByDomainAndSuggestedIsTrue(domain).orElseThrow(() -> new ServiceNotFoundException(String.format("Suggestions not found for: %d", domain)));
+    public List<efrem.datamanager.service.Service> loadSuggestedServices() {
+        Optional<List<efrem.datamanager.service.Service>> optionalServiceList = serviceRepository.findServiceBySuggested(true);
+        if (optionalServiceList.isPresent())
+            return optionalServiceList.get();
+        else
+            return null;
+    }
+
+    public List<efrem.datamanager.service.Service> loadSuggestions(String domain) {
+        Optional<List<efrem.datamanager.service.Service>> optionalServiceList = serviceRepository.findServiceByDomainAndSuggestedIsTrue(domain);
+        if (optionalServiceList.isPresent())
+            return optionalServiceList.get();
+        else
+            return null;
     }
 
     @Transactional
-    public void addService(String domain, String contact_email, boolean isSuggested) {
-        efrem.datamanager.service.Service service = new efrem.datamanager.service.Service(domain, contact_email, isSuggested);
+    public void addService(String domain, String contact_email, boolean isSuggested, String suggestionUserEmail) {
+        efrem.datamanager.service.Service service = new efrem.datamanager.service.Service(domain, contact_email, isSuggested, suggestionUserEmail);
         Optional<List<efrem.datamanager.service.Service>> serviceOptional = serviceRepository.findServiceByDomain(service.getDomain());
         if (serviceOptional.isPresent()) {
             if (service.isSuggested())
@@ -50,5 +64,33 @@ public class ServiceService {
             serviceRepository.save(service);
         }
         userService.currentAuthenticatedUser().getInteractions().put(domain, true);
+    }
+
+    @Async
+    @Transactional
+    public void acceptSuggestion(Long id) {
+        Optional<efrem.datamanager.service.Service> optionalSuggestion = serviceRepository.findServiceById(id);
+        efrem.datamanager.service.Service suggestion = optionalSuggestion.get();
+        addService(suggestion.getDomain(), suggestion.getContact_email(), false, "");
+        List<efrem.datamanager.service.Service> suggestedServices = loadSuggestedServices();
+        for (efrem.datamanager.service.Service service : suggestedServices) {
+            if (service.getDomain().equals(suggestion.getDomain()))
+                serviceRepository.deleteServiceById(service.getId());
+        }
+        for (User user : userService.getAllUsers()) {
+            if (user.getInteractions().containsKey(suggestion.getDomain()))
+                if (user.getInteractions().get(suggestion.getDomain()) == true)
+                    user.getInteractions().put(suggestion.getDomain(), false);
+        }
+    }
+
+    @Async
+    @Transactional
+    public void declineSuggestion(Long id) {
+        Optional<efrem.datamanager.service.Service> optionalSuggestion = serviceRepository.findServiceById(id);
+        efrem.datamanager.service.Service suggestion = optionalSuggestion.get();
+        User user = (User) userService.loadUserByUsername(suggestion.getSuggestionUserEmail());
+        user.getInteractions().put(suggestion.getDomain(), false);
+        serviceRepository.deleteServiceById(suggestion.getId());
     }
 }
