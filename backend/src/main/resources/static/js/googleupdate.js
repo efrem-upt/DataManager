@@ -17,7 +17,7 @@ window.addEventListener('load', function()
     {
         // Date string is appended as a query with live data 
         // for not to use the cached version 
-        var url = 'http://localhost:8080/dashboard/google'
+        var url = 'http://localhost:8080/dashboard/google/status'
         xhr = getXmlHttpRequestObject();
         xhr.onreadystatechange = evenHandler;
         // asynchronous requests
@@ -31,13 +31,10 @@ window.addEventListener('load', function()
         // Check response is ready or not
         if(xhr.readyState == 4 && xhr.status == 200)
         {
-            parser = new DOMParser();
-            var doc = parser.parseFromString(xhr.responseText, "text/html");
-            var success_image = doc.getElementById('statusImage_success');
-            var success_info = doc.getElementById('infoGoogle_success');
-            if (success_info != null) {
-                document.getElementById('statusImage_loading').outerHTML = success_image.outerHTML;
-                document.getElementById('infoGoogle_loading').outerHTML = success_info.outerHTML;
+            var json = JSON.parse(xhr.responseText);
+            if (json.message != null) {
+                document.getElementById('statusImage_loading').outerHTML = json.image;
+                document.getElementById('infoGoogle_loading').outerHTML = json.message;
                 clearInterval(timer);
                 return;
             }

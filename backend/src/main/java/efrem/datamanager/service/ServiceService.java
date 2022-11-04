@@ -1,10 +1,9 @@
 package efrem.datamanager.service;
 
-import efrem.datamanager.user.User;
+import efrem.datamanager.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -12,10 +11,12 @@ import java.util.Optional;
 @Service
 public class ServiceService {
 
+    private final UserService userService;
     private final ServiceRepository serviceRepository;
 
     @Autowired
-    public ServiceService(ServiceRepository serviceRepository) {
+    public ServiceService(UserService userService, ServiceRepository serviceRepository) {
+        this.userService = userService;
         this.serviceRepository = serviceRepository;
     }
 
@@ -31,14 +32,16 @@ public class ServiceService {
         return serviceRepository.findServiceByDomainAndSuggestedIsTrue(domain).orElseThrow(() -> new ServiceNotFoundException(String.format("Suggestions not found for: %d", domain)));
     }
 
-    public void addService(efrem.datamanager.service.Service service) {
+    @Transactional
+    public void addService(String domain, String contact_email, boolean isSuggested) {
+        efrem.datamanager.service.Service service = new efrem.datamanager.service.Service(domain, contact_email, isSuggested);
         Optional<List<efrem.datamanager.service.Service>> serviceOptional = serviceRepository.findServiceByDomain(service.getDomain());
         if (serviceOptional.isPresent()) {
             if (service.isSuggested())
                 serviceRepository.save(service);
             else {
                 Optional<efrem.datamanager.service.Service> serviceOptional1 = serviceRepository.findServiceByDomainAndSuggestedIsFalse(service.getDomain());
-                if (serviceOptional.isPresent())
+                if (serviceOptional1.isPresent())
                     throw new IllegalStateException("Service already exists");
                 else
                     serviceRepository.save(service);
@@ -46,5 +49,6 @@ public class ServiceService {
         } else {
             serviceRepository.save(service);
         }
+        userService.currentAuthenticatedUser().getInteractions().put(domain, true);
     }
 }

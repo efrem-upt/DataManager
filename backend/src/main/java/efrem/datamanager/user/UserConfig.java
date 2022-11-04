@@ -26,7 +26,7 @@ public class UserConfig {
             map2.put("amazon.com",false);
             map2.put("facebook.com",false);
             BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-            User user = new User("dragosefrem@gmail.com", bCryptPasswordEncoder.encode("test"), Set.of(UserRole.USER, UserRole.ADMIN), map);
+            User user = new User("dragosefrem@gmail.com", bCryptPasswordEncoder.encode("test"), Set.of(UserRole.USER, UserRole.MODERATOR, UserRole.ADMIN), new HashMap<String, Boolean>());
             User user2 = new User("efremdragos@yahoo.com", bCryptPasswordEncoder.encode("test"), Collections.singleton(userRole1), map2);
             repository.saveAll(List.of(user, user2));
             serviceRepository.save(new Service("box.com","dragosefrem@gmail.com",false));

@@ -39,6 +39,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionManager;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallback;
@@ -71,7 +72,6 @@ public class UserService implements UserDetailsService {
     private final ResetPasswordTokenService resetPasswordTokenService;
     private final EmailSender emailSender;
     private final DeleteAccountTokenService deleteAccountTokenService;
-    private final ServiceService serviceService;
     private final TransactionTemplate transactionTemplate;
 
     @Autowired
@@ -82,14 +82,13 @@ public class UserService implements UserDetailsService {
 
 
     @Autowired
-    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ConfirmationTokenService confirmationTokenService, ResetPasswordTokenService resetPasswordTokenService, EmailSender emailSender, DeleteAccountTokenService deleteAccountTokenService, ServiceService serviceService, TransactionTemplate transactionTemplate) {
+    public UserService(UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, ConfirmationTokenService confirmationTokenService, ResetPasswordTokenService resetPasswordTokenService, EmailSender emailSender, DeleteAccountTokenService deleteAccountTokenService, TransactionTemplate transactionTemplate) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.confirmationTokenService = confirmationTokenService;
         this.resetPasswordTokenService = resetPasswordTokenService;
         this.emailSender = emailSender;
         this.deleteAccountTokenService = deleteAccountTokenService;
-        this.serviceService = serviceService;
         this.transactionTemplate = transactionTemplate;
     }
 
@@ -581,7 +580,7 @@ public class UserService implements UserDetailsService {
                 @Override
                 protected void doInTransactionWithoutResult(TransactionStatus status) {
                     try {
-                        doSomething(finalResponse, service, currentAuthenticatedUser, connectedGoogleAccountEmail);
+                        doSomething(finalResponse, service, connectedGoogleAccountEmail);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -597,10 +596,10 @@ public class UserService implements UserDetailsService {
         }
     }
 
-    @Transactional(propagation = Propagation.REQUIRED)
-    public void doSomething(ListMessagesResponse response, Gmail service, User currentAuthenticatedUser, String connectedGoogleAccountEmail) throws IOException {
-        if (!currentAuthenticatedUser.isAssociatedGoogle())
-            currentAuthenticatedUser.setAssociatedGoogle(true);
+    @Transactional(propagation = Propagation.REQUIRED, isolation = Isolation.READ_UNCOMMITTED)
+    public void doSomething(ListMessagesResponse response, Gmail service, String connectedGoogleAccountEmail) throws IOException {
+        if (!currentAuthenticatedUser().isAssociatedGoogle())
+            currentAuthenticatedUser().setAssociatedGoogle(true);
         for (Message message : response.getMessages()) {
             Message m1 = service.users().messages().get(connectedGoogleAccountEmail, message.getId()).setFormat("metadata").setFields("payload/headers").execute();
             Stream<String> fromHeaderValue = m1.getPayload().getHeaders().stream()
@@ -614,8 +613,8 @@ public class UserService implements UserDetailsService {
             }
             if (!emailAddress.equals("gmail.com") && !emailAddress.equals("yahoo.com") && !emailAddress.equals("outlook.com")
             && !emailAddress.equals("hotmail.com") && !emailAddress.contains("upt.ro")) {
-                currentAuthenticatedUser.addInteraction(emailAddress, false);
-                userRepository.saveAndFlush(currentAuthenticatedUser);
+                currentAuthenticatedUser().addInteraction(emailAddress, false);
+                userRepository.saveAndFlush(currentAuthenticatedUser());
             }
         }
     }
@@ -689,10 +688,11 @@ public class UserService implements UserDetailsService {
                 "</div></div>";
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.SUPPORTS)
     public void sendEmailToRemoveService(String domain, String contactMail) throws MessagingException, IOException {
         SendMessage.sendEmail(userConnectedGoogleEmail, contactMail, "Personal Data Removal Request", removeServiceEmailEN(contactMail, userConnectedGoogleEmail), userServiceGmail);
-        currentAuthenticatedUser().getInteractions().replace(domain, false, true);
+        currentAuthenticatedUser().updateTransactionTrue(domain);
+        userRepository.saveAndFlush(currentAuthenticatedUser());
     }
 
 }

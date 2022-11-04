@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import javax.annotation.processing.Generated;
 import javax.persistence.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 @Entity
 @Table(name = "account")
@@ -26,7 +27,7 @@ public class User implements UserDetails {
     @ElementCollection(fetch = FetchType.EAGER)
     private Set<UserRole> userRole;
     private Boolean locked = false;
-    private Boolean enabled = false;
+    private Boolean enabled = true;
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "services_used",
             joinColumns = {@JoinColumn(name = "user_id", referencedColumnName = "id")})
@@ -87,7 +88,12 @@ public class User implements UserDetails {
     }
 
     public void addInteraction(String key, Boolean done) {
-        interactions.put(key, done);
+        if (interactions.get(key) == null)
+            interactions.put(key, done);
+    }
+
+    public void updateTransactionTrue(String key) {
+        interactions.put(key,true);
     }
 
     public void setPassword(String password) {
