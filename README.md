@@ -94,3 +94,32 @@ There are three roles: user, moderator and admin.
 - Submit emails via DataManager to the service you wish to delete your data from, the email will be sent on your behalf and from your gmail account.
 - Moderators can view suggestions made by users and approve or reject them;
 - Admin only has the power to delete users.
+
+## Screenshots
+The home page: 
+
+<p align="center">
+  <img src="img/homepage.png" width = "900" height = "500">
+</p>
+
+The registration page:
+
+<p align="center">
+  <img src="img/registerpage.png" width = "900" height = "500">
+</p>
+
+The dashboard page (before linking Google account):
+
+<p align="center">
+  <img src="img/dashboard_before.png" width = "900" height = "500">
+</p>
+
+The dashboard page (after linking Google account):
+
+<p align="center">
+  <img src="img/dashboard_after.png" width = "900" height = "500">
+</p>
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
