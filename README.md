@@ -9,7 +9,7 @@ DataManager is an online data management web application made using Spring that 
 * [Java 17](https://www.oracle.com/java/technologies/javase-downloads.html)
 * [Spring](https://spring.io/)
 * [Maven](https://maven.apache.org/) (build tool)
-* [PostgreSQL](https://www.postgresql.org/download/) (as Database)
+* [PostgreSQL 14.5](https://www.postgresql.org/download/) (as Database)
 
 ## Prerequisites
 To be able to install and run this project, please make sure you have installed Java 17 or higher. Otherwise, the setup will not work!
@@ -20,6 +20,8 @@ To install a newer version of Java, you can go to [Oracle](https://www.oracle.co
 It would be good if you also installed Maven to your system. To check if you have Maven installed run `mvn -version`.
 
 If you need to install any of them, please refer to this [Maven tutorial](https://www.baeldung.com/install-maven-on-windows-linux-mac).
+
+Download PostgreSQL from https://www.postgresql.org/download/windows/. Any version after 14 should work.
 
 ## How to build
 To set up and run the project locally on your machine, please follow the next steps.
