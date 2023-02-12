@@ -575,7 +575,6 @@ public class UserService implements UserDetailsService {
         String accessToken = credential.getAccessToken();
         String url = "https://www.googleapis.com/oauth2/v1/userinfo?access_token=";
         url = url + accessToken;
-        // TODO: Get JSON response from URL and extract user email to use as userId for methods below
         Logger logger = Logger.getLogger("myLog");
         JSONObject json = readJsonFromUrl(url);
         String connectedGoogleAccountEmail = (String) json.get("email");
